@@ -1,0 +1,403 @@
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+
+local Window = OrionLib:MakeWindow({Name = "SimpleMenu 💉"})
+
+local Tab = Window:MakeTab({
+    Name = "Brookhaven",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+OrionLib:MakeNotification({
+    Name = "SimpleMenu",
+    Content = "Successful!",
+    Image = "rbxassetid://4483345998",
+    Time = 5
+})
+
+--- NAMES 
+
+local Players = game:GetService("Players"):GetPlayers()
+local LocalPlayer = game:GetService("Players").LocalPlayer
+
+local function EnableNames()
+    for _, player in ipairs(Players) do
+        local character = player.Character
+        if character and player ~= LocalPlayer then
+            local head = character:WaitForChild("Head")
+            local nameTag = head:FindFirstChild("NameTag")
+            
+            if not nameTag then
+                nameTag = Instance.new("BillboardGui")
+                nameTag.Name = "NameTag"
+                nameTag.Adornee = head
+                nameTag.Size = UDim2.new(0, 100, 0, 40)
+                nameTag.StudsOffset = Vector3.new(0, 3, 0)
+                nameTag.AlwaysOnTop = true
+
+                local nameLabel = Instance.new("TextLabel")
+                nameLabel.Size = UDim2.new(1, 0, 0.5, 0)
+                nameLabel.BackgroundTransparency = 1
+                nameLabel.TextColor3 = Color3.new(1, 1, 1)
+                nameLabel.TextStrokeTransparency = 0.5
+                nameLabel.Font = Enum.Font.SourceSans
+                nameLabel.TextSize = 14
+                nameLabel.Text = player.Name
+                nameLabel.Parent = nameTag
+
+                local distanceLabel = nameLabel:Clone()
+                distanceLabel.Size = UDim2.new(1, 0, 0.5, 0)
+                distanceLabel.Position = UDim2.new(0, 0, 0.5, 0)
+                distanceLabel.Parent = nameTag
+
+                nameTag.Parent = head
+                
+                game:GetService("RunService").RenderStepped:Connect(function()
+                    local distance = (LocalPlayer.Character.Head.Position - head.Position).Magnitude
+                    distanceLabel.Text = "[ Meters ] " .. tostring(math.floor(distance)) .. "m"
+                end)
+            end
+        end
+    end
+end
+
+local function DisableNames()
+    for _, player in ipairs(Players) do
+        local character = player.Character
+        if character then
+            local head = character:FindFirstChild("Head")
+            local nameTag = head:FindFirstChild("NameTag")
+            
+            if nameTag then
+                nameTag:Destroy()
+            end
+        end
+    end
+end
+
+local isNamesEnabled = false
+
+Tab:AddToggle({
+    Name = "Names",
+    Default = false,
+    Callback = function(Value)
+        isNamesEnabled = Value
+        if isNamesEnabled then
+            EnableNames()
+        else
+            DisableNames()
+        end
+    end    
+})
+
+------ INFINITE JUMP
+
+local InfiniteJumpEnabled = false
+
+local function ToggleInfiniteJump()
+    InfiniteJumpEnabled = not InfiniteJumpEnabled
+end
+
+local function JumpIfEnabled()
+    if InfiniteJumpEnabled then
+        game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid"):ChangeState("Jumping")
+    end
+end
+
+local BoxToggle = Tab:AddToggle({
+    Name = "Infinite Jump",
+    Default = InfiniteJumpEnabled,
+    Callback = function(Value)
+        InfiniteJumpEnabled = Value
+    end
+})
+
+game:GetService("UserInputService").JumpRequest:Connect(JumpIfEnabled)
+
+--- SIMPLE MENU 1000x
+
+local args = {
+    [1] = "SimpleMenu",
+    [2] = "All"
+}
+
+local isSending = false
+local cooldown = 2 -- Tempo em segundos entre cada envio
+local repeatCount = 1000 -- Número de vezes a enviar a mensagem
+
+local function SendMessages()
+    for i = 1, repeatCount do
+        if not isSending then
+            break
+        end
+
+        game:GetService("ReplicatedStorage"):WaitForChild("DefaultChatSystemChatEvents"):WaitForChild("SayMessageRequest"):FireServer(unpack(args))
+        wait(cooldown)
+    end
+end
+
+Tab:AddToggle({
+    Name = "Say SimpleMenu 1000x",
+    Default = false,
+    Callback = function(Value)
+        isSending = Value
+        if isSending then
+            SendMessages()
+        end
+    end    
+})
+
+
+-- NOCLIP 
+
+local players = game:GetService("Players")
+local user_input = game:GetService("UserInputService")
+
+local noclipToggle = Tab:AddToggle({
+    Name = "Noclip",
+    Default = false,
+    Callback = function(Value)
+        local localPlayer = players.LocalPlayer
+        local character = localPlayer.Character
+        
+        if character then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = not Value
+                end
+            end
+        end
+    end    
+})
+
+user_input.InputBegan:Connect(function(input, gameProcessedEvent)
+    if noclipToggle.Value and input.UserInputType == Enum.UserInputType.Keyboard then
+        local character = players.LocalPlayer.Character
+        if character then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                end
+            end
+        end
+    end
+end)
+
+user_input.InputEnded:Connect(function(input, gameProcessedEvent)
+    if noclipToggle.Value and input.UserInputType == Enum.UserInputType.Keyboard then
+        local character = players.LocalPlayer.Character
+        if character then
+            for _, part in pairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = true
+                end
+            end
+        end
+    end
+end)
+
+
+
+----- ITEM
+
+local player = game.Players.LocalPlayer
+local starterGui = game.StarterGui
+
+local toolsEnabled = false
+
+local function enableTools()
+    for index, child in pairs(game:GetService("Workspace"):GetChildren()) do
+        if child:IsA("BasePart") then
+            child.Locked = false
+        end
+        if child:IsA("Model") then
+            for _, chil in pairs(child:GetDescendants()) do
+                if chil:IsA("BasePart") then
+                    chil.Locked = false
+                end
+            end
+        end
+    end
+    
+    local hammer = Instance.new("HopperBin", player.Backpack)
+    hammer.BinType = Enum.BinType.Hammer
+    
+    local clone = Instance.new("HopperBin", player.Backpack)
+    clone.BinType = Enum.BinType.Clone
+    
+    local grab = Instance.new("HopperBin", player.Backpack)
+    grab.BinType = Enum.BinType.Grab
+
+    print("Ferramentas habilitadas!")
+end
+
+local function onButtonClicked()
+    if not toolsEnabled then
+        enableTools()
+        toolsEnabled = true
+        print("Ferramentas habilitadas!")
+    else
+        print("As ferramentas já estão habilitadas!")
+    end
+end
+
+
+
+Tab:AddButton({
+    Name = "Btools",
+    Callback = function()
+        onButtonClicked()
+    end
+})
+
+
+--- FPS 
+
+local starterGui = game.StarterGui
+
+local function removeTextures()
+    for _, part in pairs(game:GetService("Workspace"):GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Material = Enum.Material.SmoothPlastic
+        end
+    end
+    print("Todas as texturas foram removidas, o jogo agora parece mais simples!")
+end
+
+local function restoreTextures()
+    for _, part in pairs(game:GetService("Workspace"):GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Material = Enum.Material.Plastic
+        end
+    end
+    print("As texturas foram restauradas!")
+end
+
+local function onButtonClicked()
+    if not texturesRemoved then
+        removeTextures()
+        texturesRemoved = true
+    else
+        restoreTextures()
+        texturesRemoved = false
+    end
+end
+
+
+Tab:AddButton({
+    Name = "FPS",
+    Callback = function()
+        onButtonClicked()
+    end
+})
+
+--- TP NEAREST PLAYER 
+
+local player = game.Players.LocalPlayer
+
+local function FindNearestPlayer()
+    local players = game.Players:GetPlayers()
+    local closestPlayer = nil
+    local shortestDistance = math.huge
+
+    for _, otherPlayer in ipairs(players) do
+        if otherPlayer ~= player then
+            local character = otherPlayer.Character
+            local characterPosition = character and character.PrimaryPart and character.PrimaryPart.Position
+            
+            if characterPosition then
+                local distance = (player.Character.PrimaryPart.Position - characterPosition).Magnitude
+                if distance < shortestDistance then
+                    closestPlayer = otherPlayer
+                    shortestDistance = distance
+                end
+            end
+        end
+    end
+
+    return closestPlayer
+end
+
+local function TeleportToNearestPlayer()
+    local closestPlayer = FindNearestPlayer()
+    
+    if closestPlayer then
+        local character = player.Character
+        local characterPosition = character and character.PrimaryPart and character.PrimaryPart.Position
+        
+        if characterPosition then
+            local targetCharacter = closestPlayer.Character
+            local targetPosition = targetCharacter and targetCharacter.PrimaryPart and targetCharacter.PrimaryPart.Position
+            
+            if targetPosition then
+                local offset = Vector3.new(0, 5, 0) -- Teleport slightly above the target player
+                character:SetPrimaryPartCFrame(CFrame.new(targetPosition + offset))
+            end
+        end
+    end
+end
+
+local Button = Tab:AddButton({
+    Name = "TP to Nearest Player",
+    Text = "TP to Nearest Player",
+    Callback = function()
+        TeleportToNearestPlayer()
+    end
+})
+
+---- TP PLAYER
+
+local function TeleportToPlayer(playerName)
+    local targetPlayer = game.Players:FindFirstChild(playerName)
+    if targetPlayer then
+        local targetCharacter = targetPlayer.Character
+        local myCharacter = game.Players.LocalPlayer.Character
+
+        if targetCharacter and myCharacter then
+            local targetHumanoidRootPart = targetCharacter:FindFirstChild("HumanoidRootPart")
+            local myHumanoidRootPart = myCharacter:FindFirstChild("HumanoidRootPart")
+
+            if targetHumanoidRootPart and myHumanoidRootPart then
+                myHumanoidRootPart.CFrame = targetHumanoidRootPart.CFrame
+            end
+        end
+    else
+        print("Player not found.")
+    end
+end
+
+Tab:AddTextbox({
+    Name = "TP to player",
+    Placeholder = "Insert the name...",
+    Callback = function(playerName)
+        TeleportToPlayer(playerName)
+    end
+})
+
+----------  CHARACTER SIZE UP 
+
+local args = {
+    [1] = "CharacterSizeUp",
+    [2] = 1
+}
+
+local function FireCharacterSizeUp()
+    game:GetService("ReplicatedStorage"):WaitForChild("JK"):WaitForChild("TR"):WaitForChild("1Clothe1s"):FireServer(unpack(args))
+end
+
+local newValue = 5
+
+Tab:AddTextbox({
+    Name = "Character Size",
+    Default = "Input",
+    TextDisappear = true,
+    Callback = function(Value)
+        newValue = tonumber(Value)
+        args[2] = newValue  -- Atualiza o valor do argumento
+        FireCharacterSizeUp()  -- Chama a função para enviar o novo valor para o servidor
+    end
+})
+
+FireCharacterSizeUp()  -- Envia o valor inicial para o servidor
+
+
